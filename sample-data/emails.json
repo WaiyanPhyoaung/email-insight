@@ -1,0 +1,66 @@
+[
+  {
+    "id": "email-001",
+    "subject": "Your Amazon.com order of \"USB-C Hub\"",
+    "from": "order-update@amazon.com",
+    "to": "user@example.com",
+    "date": "2024-03-15T14:22:00Z",
+    "body": "Hello,\n\nThank you for shopping with us. Order total: $34.99\n\nItems: USB-C Hub 7-in-1\nOrder #112-8849201\n\nShipped to: Home\n\nAmazon.com"
+  },
+  {
+    "id": "email-002",
+    "subject": "Your receipt from Starbucks",
+    "from": "receipts@starbucks.com",
+    "to": "user@example.com",
+    "date": "2024-03-16T08:45:00Z",
+    "body": "Thanks for your visit!\n\nStore #4421\nGrande Latte\nSubtotal: $5.25\nTax: $0.42\nTotal: $5.67\n\nPayment: Visa ****4242"
+  },
+  {
+    "id": "email-003",
+    "subject": "Welcome to Notion!",
+    "from": "team@mails.notion.so",
+    "to": "user@example.com",
+    "date": "2024-01-10T09:00:00Z",
+    "body": "Welcome to Notion!\n\nYour Plus plan trial has started. Explore templates, databases, and AI features.\n\nManage billing anytime at notion.so/settings."
+  },
+  {
+    "id": "email-004",
+    "subject": "Your Slack invoice for March 2024",
+    "from": "billing@slack.com",
+    "to": "user@example.com",
+    "date": "2024-03-01T00:00:00Z",
+    "body": "Slack Technologies\n\nInvoice #SLK-2024-0312\n\nPro plan — monthly\nAmount due: $12.50 USD\n\nWorkspace: acme-team\n\nThank you for using Slack."
+  },
+  {
+    "id": "email-005",
+    "subject": "GitHub subscription renewal",
+    "from": "noreply@github.com",
+    "to": "user@example.com",
+    "date": "2024-03-20T12:00:00Z",
+    "body": "Your GitHub Pro subscription has renewed.\n\nAmount charged: $4.00 USD\nBilling cycle: monthly\n\nReceipt available in your billing settings."
+  },
+  {
+    "id": "email-006",
+    "subject": "Uber trip receipt",
+    "from": "uber@uber.com",
+    "to": "user@example.com",
+    "date": "2024-03-18T22:30:00Z",
+    "body": "Thanks for riding with Uber.\n\nTrip on Mar 18, 2024\nTotal: $18.45\n\nPayment method: Apple Pay"
+  },
+  {
+    "id": "email-007",
+    "subject": "Figma invoice — Team plan",
+    "from": "billing@figma.com",
+    "to": "user@example.com",
+    "date": "2024-02-28T10:00:00Z",
+    "body": "Figma Inc.\n\nTeam plan — annual billing\nAmount: $180.00 USD per year ($15.00/mo equivalent)\n\nNext renewal: Feb 28, 2025"
+  },
+  {
+    "id": "email-008",
+    "subject": "OpenAI API usage receipt",
+    "from": "billing@openai.com",
+    "to": "user@example.com",
+    "date": "2024-03-25T06:00:00Z",
+    "body": "OpenAI\n\nAPI credit purchase receipt\nAmount paid: $20.00\n\nThank you for using the OpenAI API."
+  }
+]
