@@ -2,12 +2,15 @@ package service
 
 import (
 	"context"
+	"crypto/sha256"
+	"fmt"
 	"time"
 
 	"github.com/waiyanphyoaung/email-insights/internal/analyzer"
 	"github.com/waiyanphyoaung/email-insights/internal/models"
 	"github.com/waiyanphyoaung/email-insights/internal/parser"
 	"github.com/waiyanphyoaung/email-insights/internal/store"
+	"github.com/google/uuid"
 )
 
 type Processor struct {
@@ -34,8 +37,15 @@ func (p *Processor) ProcessUpload(ctx context.Context, inputs []models.UploadEma
 			emailType = analysis.EmailType
 		}
 
+		extID := input.ID
+		if extID == "" {
+			h := sha256.New()
+			h.Write([]byte(input.From + "|" + input.To + "|" + input.Subject + "|" + input.Date + "|" + input.Body))
+			extID = fmt.Sprintf("hash-%x", h.Sum(nil))
+		}
+
 		email := models.Email{
-			ExternalID:  input.ID,
+			ExternalID:  extID,
 			Subject:     input.Subject,
 			Sender:      input.From,
 			Recipient:   input.To,
@@ -48,6 +58,10 @@ func (p *Processor) ProcessUpload(ctx context.Context, inputs []models.UploadEma
 		emailID, err := p.store.InsertEmail(ctx, email)
 		if err != nil {
 			return nil, err
+		}
+		if emailID == uuid.Nil {
+			// Skip duplicate email processing
+			continue
 		}
 		result.EmailsProcessed++
 

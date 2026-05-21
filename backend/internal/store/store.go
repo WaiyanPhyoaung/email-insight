@@ -47,11 +47,20 @@ func (s *Store) InsertEmail(ctx context.Context, e models.Email) (uuid.UUID, err
 	if id == uuid.Nil {
 		id = uuid.New()
 	}
-	_, err := s.pool.Exec(ctx, `
+	var insertedID uuid.UUID
+	err := s.pool.QueryRow(ctx, `
 		INSERT INTO emails (id, external_id, subject, sender, recipient, body, received_at, email_type, processed_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-	`, id, nullStr(e.ExternalID), e.Subject, e.Sender, e.Recipient, e.Body, e.ReceivedAt, string(e.EmailType), e.ProcessedAt)
-	return id, err
+		ON CONFLICT (external_id) WHERE external_id IS NOT NULL DO NOTHING
+		RETURNING id
+	`, id, nullStr(e.ExternalID), e.Subject, e.Sender, e.Recipient, e.Body, e.ReceivedAt, string(e.EmailType), e.ProcessedAt).Scan(&insertedID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return uuid.Nil, nil
+		}
+		return uuid.Nil, err
+	}
+	return insertedID, nil
 }
 
 func (s *Store) InsertExpense(ctx context.Context, ex models.Expense) error {
@@ -67,49 +76,25 @@ func (s *Store) InsertExpense(ctx context.Context, ex models.Expense) error {
 }
 
 func (s *Store) UpsertSubscription(ctx context.Context, sub models.Subscription) error {
-	existing, err := s.findSubscriptionByService(ctx, sub.ServiceName)
-	if err != nil {
-		return err
-	}
-	now := time.Now().UTC()
-	if existing != nil {
-		amount := sub.Amount
-		if amount == nil {
-			amount = existing.Amount
-		}
-		plan := sub.Plan
-		if plan == "" {
-			plan = existing.Plan
-		}
-		cycle := sub.BillingCycle
-		if cycle == "" {
-			cycle = existing.BillingCycle
-		}
-		_, err = s.pool.Exec(ctx, `
-			UPDATE subscriptions SET
-				email_id = COALESCE($2, email_id),
-				vendor_email = COALESCE(NULLIF($3, ''), vendor_email),
-				plan = COALESCE(NULLIF($4, ''), plan),
-				amount = COALESCE($5, amount),
-				currency = COALESCE(NULLIF($6, ''), currency),
-				billing_cycle = COALESCE(NULLIF($7, ''), billing_cycle),
-				status = $8,
-				signal_type = $9,
-				confidence = GREATEST(confidence, $10),
-				last_seen_at = $11
-			WHERE id = $1
-		`, existing.ID, sub.EmailID, sub.VendorEmail, plan, amount, sub.Currency, cycle,
-			sub.Status, sub.SignalType, sub.Confidence, now)
-		return err
-	}
-
 	id := sub.ID
 	if id == uuid.Nil {
 		id = uuid.New()
 	}
-	_, err = s.pool.Exec(ctx, `
+	now := time.Now().UTC()
+	_, err := s.pool.Exec(ctx, `
 		INSERT INTO subscriptions (id, email_id, service_name, vendor_email, plan, amount, currency, billing_cycle, status, signal_type, confidence, first_seen_at, last_seen_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		ON CONFLICT (LOWER(service_name)) DO UPDATE SET
+			email_id = COALESCE(EXCLUDED.email_id, subscriptions.email_id),
+			vendor_email = COALESCE(NULLIF(EXCLUDED.vendor_email, ''), subscriptions.vendor_email),
+			plan = COALESCE(NULLIF(EXCLUDED.plan, ''), subscriptions.plan),
+			amount = COALESCE(EXCLUDED.amount, subscriptions.amount),
+			currency = COALESCE(NULLIF(EXCLUDED.currency, ''), subscriptions.currency),
+			billing_cycle = COALESCE(NULLIF(EXCLUDED.billing_cycle, ''), subscriptions.billing_cycle),
+			status = EXCLUDED.status,
+			signal_type = EXCLUDED.signal_type,
+			confidence = GREATEST(subscriptions.confidence, EXCLUDED.confidence),
+			last_seen_at = EXCLUDED.last_seen_at
 	`, id, sub.EmailID, sub.ServiceName, sub.VendorEmail, sub.Plan, sub.Amount, sub.Currency,
 		sub.BillingCycle, sub.Status, sub.SignalType, sub.Confidence, now, now)
 	return err
@@ -177,13 +162,14 @@ func (s *Store) SpendingSummary(ctx context.Context) (*models.SpendingSummary, e
 	merchantMap := make(map[string]*models.MerchantTotal)
 
 	for _, ex := range expenses {
-		summary.TotalAmount += ex.Amount
+		usdAmount := convertToUSD(ex.Amount, ex.Currency)
+		summary.TotalAmount += usdAmount
 		summary.TransactionCount++
-		summary.ByCategory[ex.Category] += ex.Amount
+		summary.ByCategory[ex.Category] += usdAmount
 		if _, ok := merchantMap[ex.Merchant]; !ok {
 			merchantMap[ex.Merchant] = &models.MerchantTotal{Merchant: ex.Merchant}
 		}
-		merchantMap[ex.Merchant].Amount += ex.Amount
+		merchantMap[ex.Merchant].Amount += usdAmount
 		merchantMap[ex.Merchant].Count++
 	}
 
@@ -261,7 +247,8 @@ func (s *Store) SaaSSummary(ctx context.Context) (*models.SaaSSummary, error) {
 			case "quarterly":
 				monthly /= 3
 			}
-			summary.EstimatedMonthly += monthly
+			usdMonthly := convertToUSD(monthly, sub.Currency)
+			summary.EstimatedMonthly += usdMonthly
 		}
 
 		key := strings.ToLower(sub.ServiceName)
@@ -324,4 +311,45 @@ func WaitForDB(ctx context.Context, url string, attempts int) (*Store, error) {
 		time.Sleep(2 * time.Second)
 	}
 	return nil, fmt.Errorf("database not ready: %w", lastErr)
+}
+
+func convertToUSD(amount float64, currency string) float64 {
+	switch strings.ToUpper(strings.TrimSpace(currency)) {
+	case "USD", "$":
+		return amount
+	case "EUR", "€":
+		return amount * 1.08
+	case "GBP", "£":
+		return amount * 1.27
+	case "CAD":
+		return amount * 0.73
+	case "AUD":
+		return amount * 0.66
+	case "JPY":
+		return amount * 0.0064
+	default:
+		return amount
+	}
+}
+
+func (s *Store) GetEmail(ctx context.Context, id uuid.UUID) (*models.Email, error) {
+	row := s.pool.QueryRow(ctx, `
+		SELECT id, external_id, subject, sender, recipient, body, received_at, email_type, processed_at, created_at
+		FROM emails WHERE id = $1
+	`, id)
+	var e models.Email
+	var extID *string
+	var receivedAt *time.Time
+	err := row.Scan(&e.ID, &extID, &e.Subject, &e.Sender, &e.Recipient, &e.Body, &receivedAt, &e.EmailType, &e.ProcessedAt, &e.CreatedAt)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if extID != nil {
+		e.ExternalID = *extID
+	}
+	e.ReceivedAt = receivedAt
+	return &e, nil
 }

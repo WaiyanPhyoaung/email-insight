@@ -43,3 +43,5 @@ CREATE TABLE IF NOT EXISTS subscriptions (
 CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(expense_date);
 CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);
 CREATE INDEX IF NOT EXISTS idx_subscriptions_service ON subscriptions(service_name);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_emails_external_id ON emails(external_id) WHERE external_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_subscriptions_service_unique ON subscriptions(LOWER(service_name));

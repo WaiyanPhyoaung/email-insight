@@ -2,6 +2,7 @@ const API_BASE = import.meta.env.VITE_API_URL ?? ''
 
 export interface Expense {
   id: string
+  email_id?: string
   merchant: string
   amount: number
   currency: string
@@ -20,6 +21,7 @@ export interface SpendingSummary {
 
 export interface Subscription {
   id: string
+  email_id?: string
   service_name: string
   vendor_email?: string
   plan?: string
@@ -52,6 +54,18 @@ export interface UploadResult {
   subscriptions_found: number
 }
 
+export interface Email {
+  id: string
+  external_id?: string
+  subject: string
+  sender: string
+  recipient: string
+  body: string
+  received_at?: string
+  email_type: string
+  processed_at: string
+}
+
 async function fetchJSON<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`)
   if (!res.ok) {
@@ -66,6 +80,7 @@ export const api = {
   spendingSummary: () => fetchJSON<SpendingSummary>('/api/spending/summary'),
   saas: () => fetchJSON<Subscription[]>('/api/saas'),
   saasSummary: () => fetchJSON<SaaSSummary>('/api/saas/summary'),
+  email: (id: string) => fetchJSON<Email>(`/api/emails/${id}`),
   upload: async (file: File): Promise<UploadResult> => {
     const form = new FormData()
     form.append('file', file)

@@ -63,6 +63,7 @@ func main() {
 	r.Get("/health", handler.Health)
 	r.Route("/api", func(r chi.Router) {
 		r.Post("/emails/upload", handler.UploadEmails)
+		r.Get("/emails/{id}", handler.GetEmail)
 		r.Get("/spending", handler.ListSpending)
 		r.Get("/spending/summary", handler.SpendingSummary)
 		r.Get("/saas", handler.ListSaaS)

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/waiyanphyoaung/email-insights/internal/parser"
 	"github.com/waiyanphyoaung/email-insights/internal/service"
 	"github.com/waiyanphyoaung/email-insights/internal/store"
@@ -112,6 +114,25 @@ func (h *Handler) SaaSSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, summary)
+}
+
+func (h *Handler) GetEmail(w http.ResponseWriter, r *http.Request) {
+	idStr := chi.URLParam(r, "id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "invalid email ID")
+		return
+	}
+	email, err := h.store.GetEmail(r.Context(), id)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if email == nil {
+		writeError(w, http.StatusNotFound, "email not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, email)
 }
 
 func writeJSON(w http.ResponseWriter, status int, v interface{}) {
