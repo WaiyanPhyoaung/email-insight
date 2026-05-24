@@ -70,9 +70,17 @@ async function fetchJSON<T>(path: string): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`)
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }))
-    throw new Error((err as { error?: string }).error ?? 'Request failed')
+    const message = (err as { error?: string }).error ?? 'Request failed'
+    throw new Error(formatAPIError(message))
   }
   return res.json()
+}
+
+function formatAPIError(message: string) {
+  if (message === 'Internal Server Error' || message === 'Failed to fetch') {
+    return 'Could not reach the API. Start the backend service, then refresh the dashboard.'
+  }
+  return message
 }
 
 export const api = {
@@ -87,7 +95,7 @@ export const api = {
     const res = await fetch(`${API_BASE}/api/emails/upload`, { method: 'POST', body: form })
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: res.statusText }))
-      throw new Error((err as { error?: string }).error ?? 'Upload failed')
+      throw new Error(formatAPIError((err as { error?: string }).error ?? 'Upload failed'))
     }
     return res.json()
   },

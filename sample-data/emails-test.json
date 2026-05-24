@@ -1,0 +1,50 @@
+[
+  {
+    "id": "test-101",
+    "subject": "Your DoorDash order receipt",
+    "from": "receipts@doordash.com",
+    "to": "you@example.com",
+    "date": "2025-05-10T19:30:00Z",
+    "body": "Thanks for your order!\n\nRestaurant: Thai Basil Kitchen\nSubtotal: $24.50\nDelivery fee: $3.99\nTip: $4.00\nTotal charged: $32.49\n\nPayment: Visa ****9012"
+  },
+  {
+    "id": "test-102",
+    "subject": "Target order confirmation #8829104",
+    "from": "orders@target.com",
+    "to": "you@example.com",
+    "date": "2025-05-12T14:05:00Z",
+    "body": "Your purchase is confirmed.\n\nItems: Paper towels (6-pack), Dish soap\nOrder total: $18.76\n\nWe'll email you when your order ships."
+  },
+  {
+    "id": "test-103",
+    "subject": "Welcome to Linear!",
+    "from": "hello@linear.app",
+    "to": "you@example.com",
+    "date": "2025-05-01T10:00:00Z",
+    "body": "Welcome to Linear!\n\nYour team workspace is ready. Standard plan — monthly billing.\nAmount: $8.00 USD per seat\n\nManage subscription at linear.app/settings/billing."
+  },
+  {
+    "id": "test-104",
+    "subject": "Vercel Pro plan renewal",
+    "from": "billing@vercel.com",
+    "to": "you@example.com",
+    "date": "2025-05-15T00:00:00Z",
+    "body": "Your invoice for May 2025\n\nPro plan — monthly subscription\nAmount due: $20.00 USD\n\nThank you for using Vercel."
+  },
+  {
+    "id": "test-105",
+    "subject": "Spotify Premium receipt",
+    "from": "no-reply@spotify.com",
+    "to": "you@example.com",
+    "date": "2025-05-14T08:00:00Z",
+    "body": "Payment received for Spotify Premium.\n\nPlan: Individual\nTotal charged: $11.99\nBilling cycle: monthly\n\nEnjoy your music!"
+  },
+  {
+    "id": "test-106",
+    "subject": "Team meeting notes — no action needed",
+    "from": "colleague@acme.com",
+    "to": "you@example.com",
+    "date": "2025-05-13T16:45:00Z",
+    "body": "Hi,\n\nAttached are notes from yesterday's sync. No expenses or billing items here — just FYI.\n\nCheers"
+  }
+]

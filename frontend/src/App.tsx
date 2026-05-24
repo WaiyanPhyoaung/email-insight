@@ -23,6 +23,7 @@ export default function App() {
   const [uploading, setUploading] = useState(false)
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [errorTitle, setErrorTitle] = useState('Request issue')
   const [dragActive, setDragActive] = useState(false)
 
   // Filtering & Sorting State
@@ -51,6 +52,7 @@ export default function App() {
       setSubscriptions(s)
       setSaaSSummary(ss)
     } catch (err) {
+      setErrorTitle('Dashboard unavailable')
       setError(err instanceof Error ? err.message : 'Failed to load data')
     } finally {
       setLoading(false)
@@ -70,6 +72,7 @@ export default function App() {
       setUploadResult(result)
       await refresh()
     } catch (err) {
+      setErrorTitle('Upload issue')
       setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
       setUploading(false)
@@ -112,10 +115,10 @@ export default function App() {
     <div className="app-container">
       <aside className="sidebar">
         <div className="sidebar-brand">
-          <div className="brand-logo">📊</div>
+          <div className="brand-logo" aria-hidden="true">EI</div>
           <div>
             <h2>EmailInsight</h2>
-            <p className="eyebrow">Finance Intelligence</p>
+            <p className="eyebrow">Inbox finance</p>
           </div>
         </div>
 
@@ -128,7 +131,7 @@ export default function App() {
               setSortOrder('desc')
             }}
           >
-            <span className="icon">💳</span> Spending Analysis
+            <span className="nav-icon" aria-hidden="true">S</span> Spending
           </button>
           <button
             className={`nav-item ${tab === 'saas' ? 'active' : ''}`}
@@ -138,13 +141,13 @@ export default function App() {
               setSortOrder('asc')
             }}
           >
-            <span className="icon">🔄</span> SaaS Subscriptions
+            <span className="nav-icon" aria-hidden="true">R</span> Subscriptions
           </button>
         </nav>
 
         <div className="sidebar-footer">
-          <p>Version 2.0 (Senior Review)</p>
-          <div className="badge">Secured</div>
+          <p>Local workspace</p>
+          <div className="badge">Private</div>
         </div>
       </aside>
 
@@ -153,18 +156,17 @@ export default function App() {
           <div>
             <h1>{tab === 'spending' ? 'Spending Analysis' : 'SaaS Discovery'}</h1>
             <p className="subtitle">
-              Analyzes receipt and subscription emails using AI models to build expense reports and track active trials or plans.
+              Review uploaded receipts, invoices, renewals, and trial emails in one focused workspace.
             </p>
           </div>
 
           <div className="header-actions">
-            <button className="refresh-btn" onClick={refresh} title="Refresh data">
-              🔄
+            <button className="refresh-btn" onClick={refresh} title="Refresh data" disabled={loading || uploading}>
+              Refresh
             </button>
           </div>
         </header>
 
-        {/* Drag and Drop Zone */}
         <div
           className={`dropzone ${dragActive ? 'drag-active' : ''} ${uploading ? 'processing' : ''}`}
           onDragEnter={handleDrag}
@@ -173,13 +175,13 @@ export default function App() {
           onDrop={handleDrop}
         >
           <div className="dropzone-inner">
-            <span className="drop-icon">{uploading ? '⚙️' : '📥'}</span>
+            <span className="drop-icon" aria-hidden="true">{uploading ? '...' : 'CSV'}</span>
             <div>
-              <h3>{uploading ? 'Processing email data...' : 'Drag & drop inbox export here'}</h3>
-              <p>Supports JSON array or CSV containing subject, sender, and body fields</p>
+              <h3>{uploading ? 'Processing upload' : 'Upload inbox export'}</h3>
+              <p>JSON or CSV with subject, sender, body, and optional date fields.</p>
             </div>
             <label className="file-input-label">
-              Browse file
+              Choose file
               <input
                 type="file"
                 accept=".json,.csv,application/json,text/csv"
@@ -196,9 +198,8 @@ export default function App() {
 
         {uploadResult && (
           <div className="banner success">
-            <span className="banner-icon">✅</span>
             <div>
-              <strong>Process completed successfully!</strong>
+              <strong>Upload processed</strong>
               <p>
                 Parsed {uploadResult.emails_processed} new emails, extracted{' '}
                 {uploadResult.expenses_extracted} expenses and found{' '}
@@ -213,9 +214,8 @@ export default function App() {
 
         {error && (
           <div className="banner error">
-            <span className="banner-icon">⚠️</span>
             <div>
-              <strong>Ingestion Error</strong>
+              <strong>{errorTitle}</strong>
               <p>{error}</p>
             </div>
             <button className="banner-close" onClick={() => setError(null)}>
@@ -227,7 +227,7 @@ export default function App() {
         {loading ? (
           <div className="loading-state">
             <div className="spinner"></div>
-            <p>Gathering smart insights…</p>
+            <p>Loading dashboard data...</p>
           </div>
         ) : tab === 'spending' ? (
           <SpendingView
@@ -394,9 +394,9 @@ function SpendingView({
     <div className="dashboard-grid">
       <section className="stats-cards-row">
         <div className="stat-card">
-          <span className="stat-icon">💰</span>
+          <span className="stat-icon" aria-hidden="true">$</span>
           <div>
-            <span className="stat-label">Total Volume (USD)</span>
+            <span className="stat-label">Total Spend</span>
             <span className="stat-value">
               {summary ? formatMoney(summary.total_amount) : '$0.00'}
             </span>
@@ -404,7 +404,7 @@ function SpendingView({
         </div>
 
         <div className="stat-card">
-          <span className="stat-icon">💳</span>
+          <span className="stat-icon" aria-hidden="true">#</span>
           <div>
             <span className="stat-label">Transactions</span>
             <span className="stat-value">{summary?.transaction_count ?? 0}</span>
@@ -412,9 +412,9 @@ function SpendingView({
         </div>
 
         <div className="stat-card">
-          <span className="stat-icon">🏷️</span>
+          <span className="stat-icon" aria-hidden="true">C</span>
           <div>
-            <span className="stat-label">Categories Captured</span>
+            <span className="stat-label">Categories</span>
             <span className="stat-value">
               {Object.keys(summary?.by_category ?? {}).length}
             </span>
@@ -424,10 +424,10 @@ function SpendingView({
 
       <section className="card card-chart">
         <div className="card-header">
-          <h2>Budget Allocation</h2>
-          <span className="subtitle">Breakdown of expenses by category (normalized in USD)</span>
+          <h2>Category Breakdown</h2>
+          <span className="subtitle">Expenses normalized to USD</span>
         </div>
-        {summary && <DonutChart data={summary.by_category} formatMoney={formatMoney} />}
+        {summary ? <DonutChart data={summary.by_category} formatMoney={formatMoney} /> : <p className="empty-chart">Upload emails to see category data.</p>}
       </section>
 
       <section className="card wide">
@@ -440,7 +440,7 @@ function SpendingView({
           <div className="filter-bar">
             <input
               type="text"
-              placeholder="Search merchant..."
+              placeholder="Search merchants"
               className="search-input"
               value={spendingSearch}
               onChange={(e) => setSpendingSearch(e.target.value)}
@@ -517,7 +517,7 @@ function SpendingView({
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="table-empty">
-                    No transactions match your search/filters.
+                    No transactions match the current filters.
                   </td>
                 </tr>
               )}
@@ -578,7 +578,7 @@ function SaaSView({
     <div className="dashboard-grid">
       <section className="stats-cards-row">
         <div className="stat-card">
-          <span className="stat-icon">🔄</span>
+          <span className="stat-icon" aria-hidden="true">A</span>
           <div>
             <span className="stat-label">Active Subscriptions</span>
             <span className="stat-value">{summary?.active_count ?? 0}</span>
@@ -586,9 +586,9 @@ function SaaSView({
         </div>
 
         <div className="stat-card">
-          <span className="stat-icon">📈</span>
+          <span className="stat-icon" aria-hidden="true">$</span>
           <div>
-            <span className="stat-label">Est. Monthly Total</span>
+            <span className="stat-label">Monthly Estimate</span>
             <span className="stat-value">
               {summary ? formatMoney(summary.estimated_monthly, summary.currency) : '$0.00'}
             </span>
@@ -596,7 +596,7 @@ function SaaSView({
         </div>
 
         <div className="stat-card">
-          <span className="stat-icon">🔮</span>
+          <span className="stat-icon" aria-hidden="true">T</span>
           <div>
             <span className="stat-label">Tracked Services</span>
             <span className="stat-value">{summary?.services.length ?? 0}</span>
@@ -607,7 +607,7 @@ function SaaSView({
       <section className="card">
         <div className="card-header">
           <h2>Billing Cycles</h2>
-          <span className="subtitle">Distribution of subscription renewals</span>
+          <span className="subtitle">Renewal cadence by detected service</span>
         </div>
         <div className="cycle-distribution">
           {summary &&
@@ -647,7 +647,7 @@ function SaaSView({
           <div className="filter-bar">
             <input
               type="text"
-              placeholder="Search service name..."
+              placeholder="Search services"
               className="search-input"
               value={saasSearch}
               onChange={(e) => setSaasSearch(e.target.value)}
@@ -688,7 +688,7 @@ function SaaSView({
 
         <div className="saas-cards-grid">
           {filtered.map((sub) => (
-            <article key={sub.id} className="saas-glass-card">
+            <article key={sub.id} className="subscription-card">
               <header className="saas-card-header">
                 <div>
                   <h3>{sub.service_name}</h3>
@@ -698,7 +698,7 @@ function SaaSView({
               </header>
 
               <div className="saas-card-body">
-                <span className="meta-label">Estimated Price</span>
+                <span className="meta-label">Estimated price</span>
                 <p className="amount-price">
                   {sub.amount != null ? formatMoney(sub.amount, sub.currency) : '—'}
                   {sub.billing_cycle && <span className="cycle-txt"> / {sub.billing_cycle}</span>}
@@ -719,13 +719,13 @@ function SaaSView({
               </div>
 
               <footer className="saas-card-footer">
-                <span className="signal-badge" title="AI Signal Trigger">{sub.signal_type}</span>
+                <span className="signal-badge" title="Detected from this email">{sub.signal_type}</span>
                 {sub.email_id ? (
                   <button
                     className="view-email-btn secondary"
                     onClick={() => onSelectEmail(sub.email_id!)}
                   >
-                    View Source
+                    View source
                   </button>
                 ) : (
                   <span className="muted">—</span>
@@ -734,7 +734,7 @@ function SaaSView({
             </article>
           ))}
           {filtered.length === 0 && (
-            <div className="saas-empty-grid">No SaaS subscriptions match your active filters.</div>
+            <div className="saas-empty-grid">No subscriptions match the current filters.</div>
           )}
         </div>
       </section>
@@ -773,10 +773,8 @@ function EmailDrawer({
     }
   }, [emailId])
 
-  // Simple highlighter for prices/keywords in email body
   const renderHighlightedBody = (body: string) => {
     if (!body) return ''
-    // Bold dollar amounts like $4.00, $20.00, $180.00 USD etc
     const amountRegex = /(\$\d+(?:\.\d{2})?)/g
     const parts = body.split(amountRegex)
     return parts.map((part, idx) => {
@@ -796,8 +794,8 @@ function EmailDrawer({
       <div className="drawer-container" onClick={(e) => e.stopPropagation()}>
         <header className="drawer-header">
           <div>
-            <h3>Origin Email Source</h3>
-            <p className="drawer-subtitle">Verifying AI extraction accuracy</p>
+            <h3>Source Email</h3>
+            <p className="drawer-subtitle">Original message used for extraction</p>
           </div>
           <button className="close-btn" onClick={onClose}>
             &times;
@@ -808,11 +806,10 @@ function EmailDrawer({
           {loading ? (
             <div className="drawer-loading">
               <div className="spinner"></div>
-              <p>Fetching original email body…</p>
+              <p>Loading original email...</p>
             </div>
           ) : error ? (
             <div className="drawer-error">
-              <span>⚠️</span>
               <p>{error}</p>
             </div>
           ) : email ? (
@@ -847,7 +844,7 @@ function EmailDrawer({
               </div>
 
               <div className="email-content-block">
-                <h4>Original Email Message</h4>
+                <h4>Email body</h4>
                 <div className="email-body-box">
                   <pre>{renderHighlightedBody(email.body)}</pre>
                 </div>
